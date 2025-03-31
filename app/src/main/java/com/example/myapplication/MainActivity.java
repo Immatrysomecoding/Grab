@@ -49,13 +49,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnSignUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Navigate to sign up screen
-                // Intent intent = new Intent(MainActivity.this, SignUpActivity.class);
-                // startActivity(intent);
-            }
+        btnSignUp.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, com.example.myapplication.ui.auth.PhoneInputActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         btnLogIn.setOnClickListener(new View.OnClickListener() {

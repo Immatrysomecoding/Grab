@@ -18,7 +18,13 @@
             </intent-filter>
         </activity>
 
-        <!-- Các Activity khác (nếu có) -->
+        <activity
+            android:name=".ui.auth.SmsVerificationActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.auth.PhoneInputActivity"
+            android:exported="false" />
 
     </application>
 
