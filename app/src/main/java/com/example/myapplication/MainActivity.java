@@ -1,67 +1,73 @@
 package com.example.myapplication;
 
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
+import android.widget.ImageView;
+import com.example.myapplication.ui.auth.PhoneInputActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
-    private CardView cardSearch;
-    private LinearLayout layoutBike, layoutCar;
-    private Button btnSignUp, btnLogIn;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Khởi tạo Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
+
         // Khởi tạo các view
-        cardSearch = findViewById(R.id.cardSearch);
-        layoutBike = findViewById(R.id.layoutBike);
-        layoutCar = findViewById(R.id.layoutCar);
-        btnSignUp = findViewById(R.id.btnSignUp);
-        btnLogIn = findViewById(R.id.btnLogIn);
+        Button btnSignUp = findViewById(R.id.btnSignUp);
+        Button btnLogIn = findViewById(R.id.btnLogIn);
+        ImageView ivArrowRight = findViewById(R.id.ivArrowRight);
 
-        // Set listeners
-        cardSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Sẽ điều hướng đến trang tìm kiếm sau khi hoàn thành auth
-                // TODO: Implement search functionality
-            }
-        });
-
-        layoutBike.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Implement bike booking functionality
-            }
-        });
-
-        layoutCar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Implement car booking functionality
-            }
-        });
-
+        // Thiết lập listeners
         btnSignUp.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, com.example.myapplication.ui.auth.PhoneInputActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            navigateToPhoneInput();
         });
 
-        btnLogIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Navigate to login screen
-                // Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                // startActivity(intent);
-            }
+        btnLogIn.setOnClickListener(v -> {
+            navigateToPhoneInput();
         });
+
+        if (ivArrowRight != null) {
+            ivArrowRight.setOnClickListener(v -> {
+                navigateToPhoneInput();
+            });
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Kiểm tra nếu người dùng đã đăng nhập
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            // Người dùng đã đăng nhập, chuyển đến màn hình chính của ứng dụng
+            // Ví dụ: startActivity(new Intent(this, HomeActivity.class));
+            // Trong trường hợp này, ta đã ở màn hình chính rồi nên có thể ẩn các nút đăng nhập/đăng ký
+            hideLoginButtons();
+        }
+    }
+
+    private void navigateToPhoneInput() {
+        Intent intent = new Intent(MainActivity.this, PhoneInputActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    private void hideLoginButtons() {
+        // Ẩn các nút đăng nhập/đăng ký
+        Button btnSignUp = findViewById(R.id.btnSignUp);
+        Button btnLogIn = findViewById(R.id.btnLogIn);
+
+        if (btnSignUp != null) btnSignUp.setVisibility(View.GONE);
+        if (btnLogIn != null) btnLogIn.setVisibility(View.GONE);
     }
 }

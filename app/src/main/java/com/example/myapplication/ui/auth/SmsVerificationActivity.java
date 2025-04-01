@@ -2,39 +2,44 @@ package com.example.myapplication.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.myapplication.R;
-import java.util.Locale;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
 
 public class SmsVerificationActivity extends AppCompatActivity {
 
     private EditText etOtpCode;
-    private TextView tvInstructions, tvResendCode, tvErrorMessage;
+    private TextView tvInstructions, tvErrorMessage;
     private ImageButton btnBack;
-    private CountDownTimer countDownTimer;
     private String phoneNumber;
-    private final long COUNT_DOWN_TIME = 30000; // 30 seconds
-    private final String CORRECT_CODE = "123456"; // Giả định mã đúng là 123456
+    private String verificationId;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_verification);
 
-        // Lấy số điện thoại từ intent
+        // Khởi tạo Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
+
+        // Lấy dữ liệu từ intent
         phoneNumber = getIntent().getStringExtra("PHONE_NUMBER");
+        verificationId = getIntent().getStringExtra("VERIFICATION_ID");
 
         // Khởi tạo các view
         etOtpCode = findViewById(R.id.etOtpCode);
         tvInstructions = findViewById(R.id.tvInstructions);
-        tvResendCode = findViewById(R.id.tvResendCode);
         tvErrorMessage = findViewById(R.id.tvErrorMessage);
         btnBack = findViewById(R.id.btnBack);
 
@@ -66,61 +71,34 @@ public class SmsVerificationActivity extends AppCompatActivity {
                 }
             }
         });
-
-        // Bắt đầu đếm ngược
-        startCountdownTimer();
-    }
-
-    private void startCountdownTimer() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-
-        countDownTimer = new CountDownTimer(COUNT_DOWN_TIME, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                long seconds = millisUntilFinished / 1000;
-                tvResendCode.setText(String.format(Locale.getDefault(),
-                        "Get new code or send by WhatsApp in %02d:%02d", seconds / 60, seconds % 60));
-            }
-
-            @Override
-            public void onFinish() {
-                tvResendCode.setText("Get new code or send by WhatsApp");
-                tvResendCode.setTextColor(getResources().getColor(android.R.color.black));
-            }
-        }.start();
     }
 
     private void verifyCode(String code) {
-        // Giả lập xác thực OTP
-        // Trong thực tế, đây sẽ là một cuộc gọi API đến backend hoặc Firebase
-
-        if (code.equals(CORRECT_CODE)) {
-            // Mã đúng, chuyển sang màn hình nhập tên
-            Intent intent = new Intent(this, NameInputActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        } else {
-            // Mã sai, hiển thị thông báo lỗi
-            tvErrorMessage.setVisibility(View.VISIBLE);
+        if (verificationId != null) {
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
+            signInWithPhoneAuthCredential(credential);
         }
+    }
+
+    private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Đăng nhập thành công, chuyển đến màn hình nhập tên
+                        Intent intent = new Intent(SmsVerificationActivity.this, NameInputActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    } else {
+                        // Đăng nhập thất bại, hiển thị thông báo lỗi
+                        tvErrorMessage.setVisibility(View.VISIBLE);
+                    }
+                });
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
     }
 }

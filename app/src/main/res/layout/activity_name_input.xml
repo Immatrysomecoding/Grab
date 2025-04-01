@@ -79,69 +79,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etName" />
 
-    <!-- Terms of Service text -->
+    <!-- Terms and Privacy text -->
+
     <TextView
-        android:id="@+id/tvTerms"
+        android:id="@+id/tvTermsAndPrivacy"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="30dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="32dp"
         android:layout_marginEnd="30dp"
-        android:text="By continuing, you confirm you've read and agree to our "
+        android:lineSpacingMultiplier="1.2"
+        android:text="By continuing, you confirm you've read and agree to our Terms of Service and Privacy Notice on how we collect, use, disclose, and process your personal data."
         android:textColor="#888888"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewUnderline" />
 
-    <!-- Terms of Service link -->
-    <TextView
-        android:id="@+id/tvTermsLink"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Terms of Service"
-        android:textColor="#4285F4"
-        android:textSize="14sp"
-        app:layout_constraintStart_toStartOf="@+id/tvTerms"
-        app:layout_constraintTop_toBottomOf="@+id/tvTerms" />
-
-    <!-- And text -->
-    <TextView
-        android:id="@+id/tvAnd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:text="and"
-        android:textColor="#888888"
-        android:textSize="14sp"
-        app:layout_constraintStart_toEndOf="@+id/tvTermsLink"
-        app:layout_constraintTop_toTopOf="@+id/tvTermsLink" />
-
-    <!-- Privacy Notice link -->
-    <TextView
-        android:id="@+id/tvPrivacyLink"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:text="Privacy Notice"
-        android:textColor="#4285F4"
-        android:textSize="14sp"
-        app:layout_constraintStart_toEndOf="@+id/tvAnd"
-        app:layout_constraintTop_toTopOf="@+id/tvAnd" />
-
-    <!-- Remaining text -->
-    <TextView
-        android:id="@+id/tvRemainingText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text=" on how we collect, use, disclose, and process your personal data."
-        android:textColor="#888888"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/tvTerms"
-        app:layout_constraintStart_toEndOf="@+id/tvPrivacyLink"
-        app:layout_constraintTop_toTopOf="@+id/tvPrivacyLink" />
-
-    <!-- Next button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNext"
         android:layout_width="0dp"
@@ -149,7 +104,7 @@
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
         android:layout_marginBottom="40dp"
-        android:backgroundTint="#A5E5C4"
+        android:backgroundTint="@color/signin_background"
         android:text="Next"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"

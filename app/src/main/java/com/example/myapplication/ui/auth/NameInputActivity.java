@@ -1,25 +1,41 @@
 package com.example.myapplication.ui.auth;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class NameInputActivity extends AppCompatActivity {
 
     private EditText etName;
     private MaterialButton btnNext;
     private ImageButton btnBack;
+    private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_name_input);
+
+        // Khởi tạo Firebase
+        mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
         // Khởi tạo views
         etName = findViewById(R.id.etName);
@@ -36,16 +52,12 @@ public class NameInputActivity extends AppCompatActivity {
         });
 
         btnNext.setOnClickListener(v -> {
-            // TODO: Xử lý lưu tên người dùng và chuyển đến màn hình tiếp theo
-            // Ví dụ:
-            // Intent intent = new Intent(NameInputActivity.this, NextActivity.class);
-            // startActivity(intent);
-            // overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            // Hiển thị trạng thái loading
+            btnNext.setEnabled(false);
+            btnNext.setText("Saving...");
 
-            // Hoặc có thể kết thúc quy trình đăng ký và chuyển đến màn hình chính
-            // finishAffinity();
-            // Intent intent = new Intent(NameInputActivity.this, MainActivity.class);
-            // startActivity(intent);
+            // Lưu thông tin người dùng
+            saveUserProfile();
         });
 
         // Theo dõi thay đổi trong trường nhập tên
@@ -71,6 +83,49 @@ public class NameInputActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void saveUserProfile() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String userId = user.getUid();
+            String name = etName.getText().toString().trim();
+            String phone = user.getPhoneNumber();
+
+            // Tạo object người dùng
+            Map<String, Object> userValues = new HashMap<>();
+            userValues.put("name", name);
+            userValues.put("phone", phone);
+            userValues.put("createdAt", System.currentTimeMillis());
+
+            // Lưu vào Firebase Database
+            mDatabase.child("users").child(userId).setValue(userValues)
+                    .addOnSuccessListener(aVoid -> {
+                        // Chuyển đến màn hình chính
+                        Intent intent = new Intent(NameInputActivity.this, MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        btnNext.setEnabled(true);
+                        btnNext.setText("Next");
+                        Toast.makeText(NameInputActivity.this,
+                                "Failed to save user data: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            // Không có người dùng đăng nhập, quay lại màn hình đăng nhập
+            Toast.makeText(this, "Authentication error. Please try again.", Toast.LENGTH_SHORT).show();
+            navigateToLogin();
+        }
+    }
+
+    private void navigateToLogin() {
+        Intent intent = new Intent(this, PhoneInputActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override
