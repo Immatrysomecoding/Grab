@@ -15,7 +15,6 @@ public class PhoneInputActivity extends AppCompatActivity {
 
     private EditText etPhoneNumber;
     private MaterialButton btnContinue;
-    private ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,15 +24,18 @@ public class PhoneInputActivity extends AppCompatActivity {
         // Khởi tạo các view
         etPhoneNumber = findViewById(R.id.etPhoneNumber);
         btnContinue = findViewById(R.id.btnContinue);
-        btnBack = findViewById(R.id.btnBack);
+        ImageButton btnBack = findViewById(R.id.btnBack);
 
         // Ban đầu nút Next bị mờ
         btnContinue.setEnabled(false);
         btnContinue.setAlpha(0.5f);
 
-        // Thiết lập listeners
-        btnBack.setOnClickListener(v -> {
-            onBackPressed();
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+            }
         });
 
         btnContinue.setOnClickListener(v -> {
@@ -45,7 +47,6 @@ public class PhoneInputActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
-        // Theo dõi thay đổi trong trường nhập số điện thoại
         etPhoneNumber.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -61,11 +62,5 @@ public class PhoneInputActivity extends AppCompatActivity {
                 btnContinue.setAlpha(hasText ? 1.0f : 0.5f);
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

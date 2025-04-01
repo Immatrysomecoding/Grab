@@ -54,17 +54,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvInstructions" />
 
-    <!-- Green vertical line (cursor) -->
-    <View
-        android:id="@+id/viewCursor"
-        android:layout_width="2dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="30dp"
-        android:background="#00B14F"
-        app:layout_constraintBottom_toBottomOf="@+id/etOtpCode"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/etOtpCode" />
-
     <!-- Underline -->
     <View
         android:id="@+id/viewUnderline"
@@ -77,28 +66,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etOtpCode" />
 
-    <!-- Didn't receive it text -->
+    <!-- Error message -->
     <TextView
-        android:id="@+id/tvDidntReceive"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:text="Didn't receive it?"
-        android:textColor="#000000"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="@+id/viewUnderline"
-        app:layout_constraintTop_toBottomOf="@+id/viewUnderline" />
-
-    <!-- Get new code text -->
-    <TextView
-        android:id="@+id/tvResendCode"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvErrorMessage"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Get new code or send by WhatsApp in 00:24"
-        android:textColor="#CCCCCC"
+        android:text="Incorrect code. You can try again."
+        android:textColor="#FF5252"
+        android:visibility="gone"
         android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="@+id/tvDidntReceive"
-        app:layout_constraintTop_toBottomOf="@+id/tvDidntReceive" />
+        app:layout_constraintEnd_toEndOf="@+id/viewUnderline"
+        app:layout_constraintStart_toStartOf="@+id/viewUnderline"
+        app:layout_constraintTop_toBottomOf="@+id/viewUnderline" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

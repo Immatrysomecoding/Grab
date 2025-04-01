@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.auth;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
@@ -15,11 +16,12 @@ import java.util.Locale;
 public class SmsVerificationActivity extends AppCompatActivity {
 
     private EditText etOtpCode;
-    private TextView tvInstructions, tvResendCode;
+    private TextView tvInstructions, tvResendCode, tvErrorMessage;
     private ImageButton btnBack;
     private CountDownTimer countDownTimer;
     private String phoneNumber;
     private final long COUNT_DOWN_TIME = 30000; // 30 seconds
+    private final String CORRECT_CODE = "123456"; // Giả định mã đúng là 123456
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +35,7 @@ public class SmsVerificationActivity extends AppCompatActivity {
         etOtpCode = findViewById(R.id.etOtpCode);
         tvInstructions = findViewById(R.id.tvInstructions);
         tvResendCode = findViewById(R.id.tvResendCode);
+        tvErrorMessage = findViewById(R.id.tvErrorMessage);
         btnBack = findViewById(R.id.btnBack);
 
         // Cập nhật mô tả với số điện thoại
@@ -48,7 +51,12 @@ public class SmsVerificationActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Ẩn thông báo lỗi khi người dùng thay đổi mã
+                if (tvErrorMessage.getVisibility() == View.VISIBLE) {
+                    tvErrorMessage.setVisibility(View.GONE);
+                }
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -85,12 +93,18 @@ public class SmsVerificationActivity extends AppCompatActivity {
     }
 
     private void verifyCode(String code) {
-        // TODO: Implement OTP verification logic here
-        // This is where you would typically make a call to Firebase
-        // or your backend to verify the OTP
+        // Giả lập xác thực OTP
+        // Trong thực tế, đây sẽ là một cuộc gọi API đến backend hoặc Firebase
 
-        // For now, we'll just simulate a success
-        // In the future, this will integrate with Firebase phone auth
+        if (code.equals(CORRECT_CODE)) {
+            // Mã đúng, chuyển sang màn hình nhập tên
+            Intent intent = new Intent(this, NameInputActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        } else {
+            // Mã sai, hiển thị thông báo lỗi
+            tvErrorMessage.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
