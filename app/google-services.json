@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "383057887922",
+    "project_id": "grab-741f2",
+    "storage_bucket": "grab-741f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383057887922:android:046c7c388d1a1ae9a83fab",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKUuzf9ULHn-CjzbEnxiUrIu6x5TiyB-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

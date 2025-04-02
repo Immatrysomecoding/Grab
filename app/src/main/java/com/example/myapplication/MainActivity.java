@@ -29,11 +29,17 @@ public class MainActivity extends AppCompatActivity {
 
         // Thiết lập listeners
         btnSignUp.setOnClickListener(v -> {
-            navigateToPhoneInput();
+            Intent intent = new Intent(MainActivity.this, PhoneInputActivity.class);
+            intent.putExtra("AUTH_MODE", "SIGNUP"); // Đánh dấu là đăng ký
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         btnLogIn.setOnClickListener(v -> {
-            navigateToPhoneInput();
+            Intent intent = new Intent(MainActivity.this, PhoneInputActivity.class);
+            intent.putExtra("AUTH_MODE", "LOGIN"); // Đánh dấu là đăng nhập
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         if (ivArrowRight != null) {
@@ -52,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             // Người dùng đã đăng nhập, chuyển đến màn hình chính của ứng dụng
             // Ví dụ: startActivity(new Intent(this, HomeActivity.class));
             // Trong trường hợp này, ta đã ở màn hình chính rồi nên có thể ẩn các nút đăng nhập/đăng ký
-            hideLoginButtons();
+            //hideLoginButtons();
         }
     }
 
@@ -62,12 +68,12 @@ public class MainActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 
-    private void hideLoginButtons() {
-        // Ẩn các nút đăng nhập/đăng ký
-        Button btnSignUp = findViewById(R.id.btnSignUp);
-        Button btnLogIn = findViewById(R.id.btnLogIn);
-
-        if (btnSignUp != null) btnSignUp.setVisibility(View.GONE);
-        if (btnLogIn != null) btnLogIn.setVisibility(View.GONE);
-    }
+//    private void hideLoginButtons() {
+//        // Ẩn các nút đăng nhập/đăng ký
+//        Button btnSignUp = findViewById(R.id.btnSignUp);
+//        Button btnLogIn = findViewById(R.id.btnLogIn);
+//
+//        if (btnSignUp != null) btnSignUp.setVisibility(View.GONE);
+//        if (btnLogIn != null) btnLogIn.setVisibility(View.GONE);
+//    }
 }

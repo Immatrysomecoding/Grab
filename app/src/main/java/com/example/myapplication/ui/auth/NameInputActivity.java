@@ -4,10 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
@@ -22,6 +25,7 @@ import java.util.Map;
 
 public class NameInputActivity extends AppCompatActivity {
 
+    private static final String TAG = "NameInputActivity";
     private EditText etName;
     private MaterialButton btnNext;
     private ImageButton btnBack;
@@ -35,7 +39,26 @@ public class NameInputActivity extends AppCompatActivity {
 
         // Khởi tạo Firebase
         mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase = FirebaseDatabase.getInstance("https://grab-741f2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
+
+        // Kiểm tra kết nối database
+        try {
+            FirebaseDatabase.getInstance("https://grab-741f2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference(".info/connected")
+                    .addValueEventListener(new com.google.firebase.database.ValueEventListener() {
+                        @Override
+                        public void onDataChange(com.google.firebase.database.DataSnapshot snapshot) {
+                            boolean connected = snapshot.getValue(Boolean.class);
+                            Log.d(TAG, "Firebase Database connected: " + connected);
+                        }
+
+                        @Override
+                        public void onCancelled(com.google.firebase.database.DatabaseError error) {
+                            Log.e(TAG, "Firebase Database connection error: " + error.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking database connection: " + e.getMessage());
+        }
 
         // Khởi tạo views
         etName = findViewById(R.id.etName);
@@ -46,9 +69,19 @@ public class NameInputActivity extends AppCompatActivity {
         btnNext.setEnabled(false);
         btnNext.setAlpha(0.5f);
 
-        // Thiết lập listeners
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Code xử lý khi nhấn nút back
+                finish();
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+            }
+        });
+
+        btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> {
-            onBackPressed();
+            // Kích hoạt sự kiện back
+            getOnBackPressedDispatcher().onBackPressed();
         });
 
         btnNext.setOnClickListener(v -> {
@@ -74,23 +107,20 @@ public class NameInputActivity extends AppCompatActivity {
                 boolean hasText = s.length() > 0;
                 btnNext.setEnabled(hasText);
                 btnNext.setAlpha(hasText ? 1.0f : 0.5f);
-
-                // Đổi màu nút Next thành xanh lá đậm khi có tên
-                if (hasText) {
-                    btnNext.setBackgroundTintList(getColorStateList(R.color.signin_background));
-                } else {
-                    btnNext.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
-                }
             }
         });
     }
 
     private void saveUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
+        Log.d(TAG, "Saving user profile, current user: " + (user != null ? user.getUid() : "null"));
+
         if (user != null) {
             String userId = user.getUid();
             String name = etName.getText().toString().trim();
             String phone = user.getPhoneNumber();
+
+            Log.d(TAG, "User data - Name: " + name + ", Phone: " + phone);
 
             // Tạo object người dùng
             Map<String, Object> userValues = new HashMap<>();
@@ -101,6 +131,8 @@ public class NameInputActivity extends AppCompatActivity {
             // Lưu vào Firebase Database
             mDatabase.child("users").child(userId).setValue(userValues)
                     .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "User data saved successfully");
+
                         // Chuyển đến màn hình chính
                         Intent intent = new Intent(NameInputActivity.this, MainActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -108,6 +140,7 @@ public class NameInputActivity extends AppCompatActivity {
                         finish();
                     })
                     .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to save user data: " + e.getMessage());
                         btnNext.setEnabled(true);
                         btnNext.setText("Next");
                         Toast.makeText(NameInputActivity.this,
@@ -116,7 +149,10 @@ public class NameInputActivity extends AppCompatActivity {
                     });
         } else {
             // Không có người dùng đăng nhập, quay lại màn hình đăng nhập
+            Log.e(TAG, "No authenticated user found");
             Toast.makeText(this, "Authentication error. Please try again.", Toast.LENGTH_SHORT).show();
+            btnNext.setEnabled(true);
+            btnNext.setText("Next");
             navigateToLogin();
         }
     }
