@@ -11,6 +11,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
@@ -24,11 +26,13 @@ public class SmsVerificationActivity extends AppCompatActivity {
     private String phoneNumber;
     private String verificationId;
     private FirebaseAuth mAuth;
+    private String authMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_verification);
+
 
         // Khởi tạo Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -36,12 +40,17 @@ public class SmsVerificationActivity extends AppCompatActivity {
         // Lấy dữ liệu từ intent
         phoneNumber = getIntent().getStringExtra("PHONE_NUMBER");
         verificationId = getIntent().getStringExtra("VERIFICATION_ID");
+        authMode = getIntent().getStringExtra("AUTH_MODE");
 
         // Khởi tạo các view
         etOtpCode = findViewById(R.id.etOtpCode);
         tvInstructions = findViewById(R.id.tvInstructions);
         tvErrorMessage = findViewById(R.id.tvErrorMessage);
         btnBack = findViewById(R.id.btnBack);
+
+        if (authMode == null) {
+            authMode = "SIGNUP"; // Mặc định là đăng ký nếu không có
+        }
 
         // Cập nhật mô tả với số điện thoại
         tvInstructions.setText("Enter the 6-digit code sent to " + phoneNumber + " by SMS.");
@@ -84,16 +93,33 @@ public class SmsVerificationActivity extends AppCompatActivity {
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Đăng nhập thành công, chuyển đến màn hình nhập tên
-                        Intent intent = new Intent(SmsVerificationActivity.this, NameInputActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                        // Xác thực thành công
+                        if (authMode.equals("LOGIN")) {
+                            // Nếu là đăng nhập, chuyển đến màn hình chính
+                            Intent intent = new Intent(SmsVerificationActivity.this, MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            // Nếu là đăng ký, chuyển đến màn hình nhập tên
+                            Intent intent = new Intent(SmsVerificationActivity.this, NameInputActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                        }
                     } else {
                         // Đăng nhập thất bại, hiển thị thông báo lỗi
                         tvErrorMessage.setVisibility(View.VISIBLE);
                     }
                 });
+    }
+
+    private void redirectToMainScreen() {
+        // Chuyển đến màn hình chính
+        Intent intent = new Intent(SmsVerificationActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

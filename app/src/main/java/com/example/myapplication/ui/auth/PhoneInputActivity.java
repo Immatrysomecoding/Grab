@@ -7,6 +7,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +33,9 @@ public class PhoneInputActivity extends AppCompatActivity {
     private ImageButton btnBack;
     private FirebaseAuth mAuth;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallbacks;
+    private String authMode;
+    private TextView tvPhoneError;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,11 +44,25 @@ public class PhoneInputActivity extends AppCompatActivity {
 
         // Khởi tạo Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance("https://grab-741f2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
 
-        // Khởi tạo các view
+        // Lấy chế độ xác thực từ intent
+        authMode = getIntent().getStringExtra("AUTH_MODE");
+        if (authMode == null) {
+            authMode = "SIGNUP"; // Mặc định là đăng ký nếu không có
+        }
+
         etPhoneNumber = findViewById(R.id.etPhoneNumber);
         btnContinue = findViewById(R.id.btnContinue);
         btnBack = findViewById(R.id.btnBack);
+        tvPhoneError = findViewById(R.id.tvPhoneError);
+
+        TextView tvTitle = findViewById(R.id.tvTitle);
+        if (authMode.equals("LOGIN")) {
+            tvTitle.setText("Log In");
+        } else {
+            tvTitle.setText("Sign Up");
+        }
 
         // Ban đầu nút Next bị mờ
         btnContinue.setEnabled(false);
@@ -51,13 +74,18 @@ public class PhoneInputActivity extends AppCompatActivity {
         });
 
         btnContinue.setOnClickListener(v -> {
+            // Ẩn thông báo lỗi nếu có
+            tvPhoneError.setVisibility(View.GONE);
+
             // Hiển thị loading và vô hiệu hóa nút
             btnContinue.setEnabled(false);
-            btnContinue.setText("Sending code...");
+            btnContinue.setText("Processing...");
 
-            // Gửi mã xác thực đến số điện thoại
-            String phoneNumber = "+84" + etPhoneNumber.getText().toString().trim();
-            sendVerificationCode(phoneNumber);
+            // Lấy số điện thoại
+            String phoneNumber = etPhoneNumber.getText().toString().trim();
+            String fullPhoneNumber = "+84" + phoneNumber;
+
+            checkPhoneNumberExists(fullPhoneNumber);
         });
 
         // Theo dõi thay đổi trong trường nhập số điện thoại
@@ -110,10 +138,56 @@ public class PhoneInputActivity extends AppCompatActivity {
                 Intent intent = new Intent(PhoneInputActivity.this, SmsVerificationActivity.class);
                 intent.putExtra("PHONE_NUMBER", "+84 " + etPhoneNumber.getText().toString().trim());
                 intent.putExtra("VERIFICATION_ID", verificationId);
+                intent.putExtra("AUTH_MODE", authMode); // Truyền chế độ xác thực sang màn hình OTP
                 startActivity(intent);
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         };
+    }
+
+    private void checkPhoneNumberExists(String phoneNumber) {
+        // Kiểm tra số điện thoại trong database
+        mDatabase.child("users").orderByChild("phone").equalTo(phoneNumber)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            // Số điện thoại đã tồn tại
+                            if (authMode.equals("SIGNUP")) {
+                                // Nếu đang đăng ký, hiển thị lỗi
+                                btnContinue.setEnabled(true);
+                                btnContinue.setText("Next");
+                                tvPhoneError.setText("This phone number is already registered. Please log in instead.");
+                                tvPhoneError.setVisibility(View.VISIBLE);
+                            } else {
+                                // Nếu đang đăng nhập, tiếp tục gửi OTP
+                                sendVerificationCode(phoneNumber);
+                            }
+                        } else {
+                            // Số điện thoại chưa tồn tại
+                            if (authMode.equals("LOGIN")) {
+                                // Nếu đang đăng nhập, hiển thị lỗi
+                                btnContinue.setEnabled(true);
+                                btnContinue.setText("Next");
+                                tvPhoneError.setText("This phone number is not registered. Please sign up first.");
+                                tvPhoneError.setVisibility(View.VISIBLE);
+                            } else {
+                                // Nếu đang đăng ký, tiếp tục gửi OTP
+                                sendVerificationCode(phoneNumber);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        // Xảy ra lỗi khi truy vấn database
+                        btnContinue.setEnabled(true);
+                        btnContinue.setText("Next");
+                        Toast.makeText(PhoneInputActivity.this,
+                                "Database error: " + databaseError.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void sendVerificationCode(String phoneNumber) {
