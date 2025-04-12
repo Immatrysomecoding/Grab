@@ -64,21 +64,30 @@
             android:textColor="#9E9E9E"
             android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tvDiscount"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_marginTop="8dp"
+            android:orientation="horizontal"
             android:background="@drawable/bg_discount"
-            android:drawableStart="@drawable/ic_discount"
-            android:drawablePadding="4dp"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="4dp"
-            android:text="25% off"
-            android:textColor="#FF6D00"
-            android:textSize="12sp" />
+            android:padding="4dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_discount"
+                android:layout_marginEnd="4dp"
+                app:tint="#FF6D00" />
+
+            <TextView
+                android:id="@+id/tvDiscount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="25% off"
+                android:textColor="#FF6D00"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

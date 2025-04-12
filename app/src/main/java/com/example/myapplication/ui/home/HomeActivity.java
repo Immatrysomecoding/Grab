@@ -1,13 +1,20 @@
 package com.example.myapplication.ui.home;
 
+import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
+import com.example.myapplication.ui.profile.ProfileActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +23,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private RecyclerView rvServices, rvOffers, rvHotspots;
     private BottomNavigationView bottomNavigation;
+    private ImageView ivProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,8 +35,14 @@ public class HomeActivity extends AppCompatActivity {
         rvOffers = findViewById(R.id.rvOffers);
         rvHotspots = findViewById(R.id.rvHotspots);
         bottomNavigation = findViewById(R.id.bottomNavigation);
+        ivProfile = findViewById(R.id.ivProfile);
 
-        Log.d("HomeActivity", "Views initialized");
+        ivProfile.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, ProfileActivity.class);
+            startActivity(intent);
+            // Animation khi mở màn hình profile
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        });
 
         // Setup bottom navigation
         bottomNavigation.setOnItemSelectedListener(item -> {
@@ -54,16 +68,51 @@ public class HomeActivity extends AppCompatActivity {
         bottomNavigation.setSelectedItemId(R.id.navigation_home);
         }
 
+    public class EqualSpacingItemDecoration extends RecyclerView.ItemDecoration {
+        public static final int HORIZONTAL = 0;
+        public static final int VERTICAL = 1;
+
+        private final int spacing;
+        private final int displayMode;
+
+        public EqualSpacingItemDecoration(int spacing, int displayMode) {
+            this.spacing = spacing;
+            this.displayMode = displayMode;
+        }
+
+        @Override
+        public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+            int position = parent.getChildAdapterPosition(view);
+            int itemCount = parent.getAdapter().getItemCount();
+
+            if (displayMode == HORIZONTAL) {
+                outRect.left = spacing;
+                outRect.right = position == itemCount - 1 ? spacing : 0;
+            } else {
+                outRect.top = spacing;
+                outRect.bottom = position == itemCount - 1 ? spacing : 0;
+            }
+        }
+    }
     private void setupServices() {
         List<ServiceItem> services = new ArrayList<>();
         services.add(new ServiceItem(R.drawable.ic_car, "Car"));
         services.add(new ServiceItem(R.drawable.ic_bike, "Bike"));
 
-        Log.d("HomeActivity", "Services count: " + services.size());
-
         ServiceAdapter serviceAdapter = new ServiceAdapter(services);
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
+
+        // Use a horizontal LinearLayoutManager instead of GridLayoutManager
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         rvServices.setLayoutManager(layoutManager);
+
+        // Add equal spacing decoration
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int itemWidth = getResources().getDimensionPixelSize(R.dimen.service_item_width); // Define this in dimens.xml
+        int totalItemsWidth = itemWidth * services.size();
+        int totalSpacing = screenWidth - totalItemsWidth;
+        int spaceBetweenItems = totalSpacing / (services.size() + 1);
+
+        rvServices.addItemDecoration(new EqualSpacingItemDecoration(spaceBetweenItems, EqualSpacingItemDecoration.HORIZONTAL));
         rvServices.setAdapter(serviceAdapter);
     }
 
