@@ -14,6 +14,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.ui.home.HomeActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -113,14 +114,10 @@ public class NameInputActivity extends AppCompatActivity {
 
     private void saveUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
-        Log.d(TAG, "Saving user profile, current user: " + (user != null ? user.getUid() : "null"));
-
         if (user != null) {
             String userId = user.getUid();
             String name = etName.getText().toString().trim();
             String phone = user.getPhoneNumber();
-
-            Log.d(TAG, "User data - Name: " + name + ", Phone: " + phone);
 
             // Tạo object người dùng
             Map<String, Object> userValues = new HashMap<>();
@@ -131,16 +128,13 @@ public class NameInputActivity extends AppCompatActivity {
             // Lưu vào Firebase Database
             mDatabase.child("users").child(userId).setValue(userValues)
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "User data saved successfully");
-
                         // Chuyển đến màn hình chính
-                        Intent intent = new Intent(NameInputActivity.this, MainActivity.class);
+                        Intent intent = new Intent(NameInputActivity.this, HomeActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to save user data: " + e.getMessage());
                         btnNext.setEnabled(true);
                         btnNext.setText("Next");
                         Toast.makeText(NameInputActivity.this,
@@ -149,10 +143,7 @@ public class NameInputActivity extends AppCompatActivity {
                     });
         } else {
             // Không có người dùng đăng nhập, quay lại màn hình đăng nhập
-            Log.e(TAG, "No authenticated user found");
             Toast.makeText(this, "Authentication error. Please try again.", Toast.LENGTH_SHORT).show();
-            btnNext.setEnabled(true);
-            btnNext.setText("Next");
             navigateToLogin();
         }
     }

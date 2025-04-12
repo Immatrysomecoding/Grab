@@ -64,6 +64,8 @@ dependencies {
 
     // Firebase Realtime Database (để lưu thông tin người dùng)
     implementation 'com.google.firebase:firebase-database'
+
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

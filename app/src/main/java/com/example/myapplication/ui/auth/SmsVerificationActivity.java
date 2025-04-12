@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.ui.home.HomeActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
@@ -96,7 +97,7 @@ public class SmsVerificationActivity extends AppCompatActivity {
                         // Xác thực thành công
                         if (authMode.equals("LOGIN")) {
                             // Nếu là đăng nhập, chuyển đến màn hình chính
-                            Intent intent = new Intent(SmsVerificationActivity.this, MainActivity.class);
+                            Intent intent = new Intent(SmsVerificationActivity.this, HomeActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();

@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Grab</string>
+    <string name="search_places">Search places</string>
+    <string name="offer_to_station">Offer to station</string>
+    <string name="diem_hot_nen_di_grab">Điểm Hot Nên-đi-Grab</string>
+    <string name="car">Car</string>
+    <string name="bike">Bike</string>
+    <string name="home">Home</string>
+    <string name="activity">Activity</string>
+    <string name="payment">Payment</string>
+    <string name="messages">Messages</string>
+    <string name="book_now">Book Now</string>
 </resources>
