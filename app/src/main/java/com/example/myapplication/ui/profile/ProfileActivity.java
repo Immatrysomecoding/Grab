@@ -1,11 +1,14 @@
 package com.example.myapplication.ui.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.myapplication.R;
+import com.example.myapplication.ui.subscription.SubscriptionsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -48,6 +51,16 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnSettings.setOnClickListener(v -> {
             // TODO: Mở màn hình cài đặt
+        });
+
+        // Set click listener for Member Benefits card
+        CardView cardMemberBenefits = findViewById(R.id.cardMemberBenefits);
+        cardMemberBenefits.setOnClickListener(v -> {
+            // Open SubscriptionsActivity
+            Intent intent = new Intent(ProfileActivity.this, SubscriptionsActivity.class);
+            startActivity(intent);
+            // Apply slide from right to left animation
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
     }
 

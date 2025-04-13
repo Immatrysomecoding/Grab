@@ -39,6 +39,10 @@
             android:name=".ui.profile.ProfileActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.subscription.SubscriptionsActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

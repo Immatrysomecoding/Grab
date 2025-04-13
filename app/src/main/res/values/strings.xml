@@ -10,4 +10,16 @@
     <string name="payment">Payment</string>
     <string name="messages">Messages</string>
     <string name="book_now">Book Now</string>
+    <string name="subscriptions">Subscriptions</string>
+    <string name="browse">Browse</string>
+    <string name="my_subscriptions">My Subscriptions</string>
+    <string name="back_button">Back</string>
+    <string name="no_subscriptions_icon">No subscriptions icon</string>
+    <string name="no_active_subscriptions">You don\'t have any active subscriptions</string>
+    <string name="subscribe_to_save">Subscribe to a plan to save on your rides</string>
+    <string name="browse_plans">Browse plans</string>
+    <string name="vehicle_icon">Vehicle icon</string>
+    <string name="active">Active</string>
+    <string name="valid_until">Valid until</string>
+    <string name="renew">Renew</string>
 </resources>

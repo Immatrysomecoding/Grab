@@ -20,4 +20,7 @@
     <!-- Custom button colors -->
     <color name="signup_background">#F0F0F0</color>   <!-- Light gray for sign-up button -->
     <color name="signin_background">#00B14F</color>   <!-- Grab green for sign-in button -->
+
+    <color name="button_disabled">#EEEEEE</color>
+    <color name="text_disabled">#9E9E9E</color>
 </resources>
