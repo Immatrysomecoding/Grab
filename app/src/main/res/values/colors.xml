@@ -23,4 +23,7 @@
 
     <color name="button_disabled">#EEEEEE</color>
     <color name="text_disabled">#9E9E9E</color>
+
+    <color name="selected_item_background">#F0F9F6</color>
+    <color name="light_green_background">#C8F4D5</color>
 </resources>

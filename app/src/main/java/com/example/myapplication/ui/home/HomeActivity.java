@@ -94,12 +94,19 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
+
     private void setupServices() {
         List<ServiceItem> services = new ArrayList<>();
         services.add(new ServiceItem(R.drawable.ic_car, "Car"));
         services.add(new ServiceItem(R.drawable.ic_bike, "Bike"));
 
-        ServiceAdapter serviceAdapter = new ServiceAdapter(services);
+        ServiceAdapter serviceAdapter = new ServiceAdapter(services, (serviceType, position) -> {
+            // Handle service item click - navigate to TransportActivity
+            Intent intent = new Intent(HomeActivity.this, com.example.myapplication.ui.transport.TransportActivity.class);
+            intent.putExtra("TRANSPORT_TYPE", serviceType.toLowerCase());
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        });
 
         // Use a horizontal LinearLayoutManager instead of GridLayoutManager
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);

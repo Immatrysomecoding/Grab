@@ -13,9 +13,15 @@ import java.util.List;
 public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceViewHolder> {
 
     private List<ServiceItem> serviceItems;
+    private OnServiceClickListener listener;
 
-    public ServiceAdapter(List<ServiceItem> serviceItems) {
+    public interface OnServiceClickListener {
+        void onServiceClick(String serviceName, int position);
+    }
+
+    public ServiceAdapter(List<ServiceItem> serviceItems, OnServiceClickListener listener) {
         this.serviceItems = serviceItems;
+        this.listener = listener;
     }
 
     @NonNull
@@ -30,6 +36,12 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
         ServiceItem item = serviceItems.get(position);
         holder.ivServiceIcon.setImageResource(item.getImageResId());
         holder.tvServiceName.setText(item.getName());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onServiceClick(item.getName(), position);
+            }
+        });
     }
 
     @Override

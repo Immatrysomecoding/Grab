@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.subscription;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,14 +15,13 @@ import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class SubscriptionBrowseFragment extends Fragment {
@@ -33,6 +33,8 @@ public class SubscriptionBrowseFragment extends Fragment {
     private DatabaseReference mDatabase;
     private FirebaseUser currentUser;
 
+    private static final int REQUEST_SUBSCRIPTION = 100;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -40,6 +42,7 @@ public class SubscriptionBrowseFragment extends Fragment {
 
         initViews(view);
         setupFirebase();
+        addSubscriptionsToDatabase(); // Add default subscriptions if not exist
         setupListeners();
 
         return view;
@@ -53,76 +56,76 @@ public class SubscriptionBrowseFragment extends Fragment {
     private void setupFirebase() {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
-        mDatabase = FirebaseDatabase.getInstance("https://grab-741f2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+    }
+
+    // Add sample subscriptions to database if they don't exist
+    private void addSubscriptionsToDatabase() {
+        mDatabase.child("subscriptions").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                if (!snapshot.hasChild("bike_subscription")) {
+//                    Map<String, Object> bikeSubscription = new HashMap<>();
+//                    bikeSubscription.put("title", "Gói GrabBike GrabUnlimited");
+//                    bikeSubscription.put("price", "17.500đ");
+//                    bikeSubscription.put("duration", "15 days");
+//                    bikeSubscription.put("discountPercent", "25%");
+//                    bikeSubscription.put("worthAmount", "3.470.000đ");
+//                    bikeSubscription.put("bikeDiscount", "25%");
+//                    bikeSubscription.put("carDiscount", "10%");
+//                    bikeSubscription.put("bikeLimit", "x99");
+//                    bikeSubscription.put("carLimit", "x10");
+//                    mDatabase.child("subscriptions").child("bike_subscription").setValue(bikeSubscription);
+//                }
+//
+//                if (!snapshot.hasChild("car_subscription")) {
+//                    Map<String, Object> carSubscription = new HashMap<>();
+//                    carSubscription.put("title", "Gói GrabCar GrabUnlimited");
+//                    carSubscription.put("price", "17.500đ");
+//                    carSubscription.put("duration", "15 days");
+//                    carSubscription.put("discountPercent", "20%");
+//                    carSubscription.put("worthAmount", "3.000.000đ");
+//                    carSubscription.put("bikeDiscount", "10%");
+//                    carSubscription.put("carDiscount", "20%");
+//                    carSubscription.put("bikeLimit", "x10");
+//                    carSubscription.put("carLimit", "x99");
+//                    mDatabase.child("subscriptions").child("car_subscription").setValue(carSubscription);
+//                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Do nothing
+            }
+        });
     }
 
     private void setupListeners() {
         cardGrabBike.setOnClickListener(v -> {
-            showSubscriptionDetails("bike");
+            openSubscriptionDetails("bike");
         });
 
         cardGrabCar.setOnClickListener(v -> {
-            showSubscriptionDetails("car");
+            openSubscriptionDetails("car");
         });
     }
 
-    private void showSubscriptionDetails(String vehicleType) {
-        // Placeholder for subscription details dialog
-        // In a real app, you would show a dialog with subscription details and payment options
-
-        // For demo purposes, we'll just subscribe the user directly
-        subscribeUser(vehicleType);
+    private void openSubscriptionDetails(String vehicleType) {
+        Intent intent = new Intent(getActivity(), SubscriptionDetailActivity.class);
+        intent.putExtra("subscription_type", vehicleType);
+        startActivityForResult(intent, REQUEST_SUBSCRIPTION);
+        getActivity().overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 
-    private void subscribeUser(String vehicleType) {
-        if (currentUser == null) {
-            Toast.makeText(getContext(), "You must be logged in to subscribe", Toast.LENGTH_SHORT).show();
-            return;
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_SUBSCRIPTION && resultCode == getActivity().RESULT_OK) {
+            // Switch to My Subscriptions tab after successful subscription
+            if (getActivity() instanceof SubscriptionsActivity) {
+                ((SubscriptionsActivity) getActivity()).switchToMySubscriptionsTab();
+            }
         }
-
-        String userId = currentUser.getUid();
-        String subscriptionId = vehicleType.equals("bike") ? "bike_subscription" : "car_subscription";
-
-        // Calculate start and end dates (15 days from now)
-        Date startDate = new Date();
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startDate);
-        calendar.add(Calendar.DAY_OF_YEAR, 15);
-        Date endDate = calendar.getTime();
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
-
-        // Create subscription data
-        Map<String, Object> subscriptionData = new HashMap<>();
-        subscriptionData.put("subscriptionId", subscriptionId);
-        subscriptionData.put("vehicleType", vehicleType);
-        subscriptionData.put("startDate", dateFormat.format(startDate));
-        subscriptionData.put("endDate", dateFormat.format(endDate));
-        subscriptionData.put("status", "active");
-        subscriptionData.put("discountPercentage", vehicleType.equals("bike") ? 25 : 20);
-        subscriptionData.put("price", "17500");
-        subscriptionData.put("autoRenew", false);
-
-        // Store in Firebase
-        mDatabase.child("user_subscriptions").child(userId).child(subscriptionId)
-                .setValue(subscriptionData)
-                .addOnSuccessListener(aVoid -> {
-                    // Update user's hasActiveSubscription flag
-                    mDatabase.child("users").child(userId).child("hasActiveSubscription").setValue(true);
-
-                    Toast.makeText(getContext(), "Successfully subscribed to " +
-                                    (vehicleType.equals("bike") ? "GrabBike" : "GrabCar") + " plan",
-                            Toast.LENGTH_SHORT).show();
-
-                    // Switch to My Subscriptions tab
-                    if (getActivity() instanceof SubscriptionsActivity) {
-                        ((SubscriptionsActivity) getActivity()).switchToMySubscriptionsTab();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Failed to subscribe: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
     }
 }

@@ -22,4 +22,6 @@
     <string name="active">Active</string>
     <string name="valid_until">Valid until</string>
     <string name="renew">Renew</string>
+    <string name="bike_icon">Bike icon</string>
+    <string name="car_icon">Car icon</string>
 </resources>

@@ -43,6 +43,18 @@
             android:name=".ui.subscription.SubscriptionsActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.subscription.SubscriptionReviewActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.subscription.SubscriptionDetailActivity"
+            android:exported="false" />
+
+        <activity android:name=".ui.transport.TransportActivity"
+            android:exported="false" />
+
+
     </application>
 
 </manifest>
