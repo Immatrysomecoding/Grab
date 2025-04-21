@@ -100,7 +100,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_more_vert" />
+                    android:src="@drawable/ic_profile" />
             </LinearLayout>
 
             <View
@@ -139,7 +139,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_more_vert" />
+                    android:src="@drawable/ic_profile" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>

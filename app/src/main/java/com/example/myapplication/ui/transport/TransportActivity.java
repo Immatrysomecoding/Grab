@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 import com.example.myapplication.ui.home.HotspotAdapter;
 import com.example.myapplication.ui.home.HotspotItem;
+import com.example.myapplication.ui.map.MapActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -125,9 +126,9 @@ public class TransportActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> onBackPressed());
 
         cardMap.setOnClickListener(v -> {
-            // Will implement map activity later
-            // Intent intent = new Intent(TransportActivity.this, MapActivity.class);
-            // startActivity(intent);
+            Intent intent = new Intent(TransportActivity.this, MapActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         layoutSearchBar.setOnClickListener(v -> {
