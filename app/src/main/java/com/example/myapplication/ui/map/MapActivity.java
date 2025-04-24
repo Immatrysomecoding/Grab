@@ -1,30 +1,24 @@
 package com.example.myapplication.ui.map;
 
 import android.Manifest;
-import android.animation.ValueAnimator;
 import android.content.pm.PackageManager;
-import android.location.Location;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.BounceInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import androidx.core.content.ContextCompat;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -33,12 +27,14 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -46,26 +42,34 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationClient;
-    private Marker currentLocationMarker;
     private LatLng selectedLocation;
+    private boolean isMapMoving = false;
 
-    private ImageButton btnBack, btnFocusLocation, btnZoomIn, btnMoreOptions;
+    // UI Components
+    private ImageButton btnBack, btnFocusLocation;
     private Button btnChooseDestination;
     private TextView tvLocationName, tvLocationAddress, tvDistanceInfo;
+    private RecyclerView rvNearbyLocations;
+    private ImageView centerMarker;
+    private View bottomSheet;
+    private View chooseDestinationContainer;
+    private BottomSheetBehavior<View> bottomSheetBehavior;
+
+    // Data
+    private NearbyLocation currentLocation;
+    private List<NearbyLocation> predefinedLocations;
+    private NearbyLocationAdapter locationAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        // Initialize views
-        btnBack = findViewById(R.id.btnBack);
-        btnFocusLocation = findViewById(R.id.btnFocusLocation);
-        btnMoreOptions = findViewById(R.id.btnMoreOptions);
-        btnChooseDestination = findViewById(R.id.btnChooseDestination);
-        tvLocationName = findViewById(R.id.tvLocationName);
-        tvLocationAddress = findViewById(R.id.tvLocationAddress);
-        tvDistanceInfo = findViewById(R.id.tvDistanceInfo);
+        initViews();
+        initializePredefinedLocations();
+        setupBottomSheet();
+        setupNearbyLocations();
+        setupClickListeners();
 
         // Get the SupportMapFragment and request notification when the map is ready
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -76,9 +80,106 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+    }
 
-        // Set click listeners
-        setupClickListeners();
+    private void initViews() {
+        btnBack = findViewById(R.id.btnBack);
+        btnFocusLocation = findViewById(R.id.btnFocusLocation);
+        btnChooseDestination = findViewById(R.id.btnChooseDestination);
+        tvLocationName = findViewById(R.id.tvLocationName);
+        tvLocationAddress = findViewById(R.id.tvLocationAddress);
+        tvDistanceInfo = findViewById(R.id.tvDistanceInfo);
+        rvNearbyLocations = findViewById(R.id.rvNearbyLocations);
+        centerMarker = findViewById(R.id.centerMarker);
+        bottomSheet = findViewById(R.id.bottomSheet);
+        chooseDestinationContainer = findViewById(R.id.chooseDestinationContainer);
+    }
+
+    private void initializePredefinedLocations() {
+        predefinedLocations = new ArrayList<>();
+
+        // Thêm các địa điểm mẫu
+        predefinedLocations.add(new NearbyLocation(
+                "142/43 An Binh St.",
+                "An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7769, 106.7009)));
+
+        predefinedLocations.add(new NearbyLocation(
+                "143/12 An Binh St.",
+                "An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7767, 106.7007)));
+
+        predefinedLocations.add(new NearbyLocation(
+                "131/10 An Binh St.",
+                "131/10 An Binh St., P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7765, 106.7005)));
+
+        predefinedLocations.add(new NearbyLocation(
+                "OverArt",
+                "142 Đường An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7763, 106.7003)));
+    }
+
+    private void setupBottomSheet() {
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setPeekHeight(getResources().getDimensionPixelSize(R.dimen.bottom_sheet_peek_height));
+        bottomSheetBehavior.setHideable(false);
+
+        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                    // Khi mở rộng hoàn toàn, ẩn nút
+                    chooseDestinationContainer.setVisibility(View.GONE);
+                } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                    // Khi thu gọn, hiện nút
+                    chooseDestinationContainer.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // Khi bottom sheet trượt, dịch chuyển container button theo cùng hướng
+                float translateY = slideOffset * chooseDestinationContainer.getHeight();
+                chooseDestinationContainer.setTranslationY(translateY);
+
+                // Ẩn khi trượt gần hết
+                if (slideOffset > 0.8) {
+                    chooseDestinationContainer.setVisibility(View.GONE);
+                } else {
+                    chooseDestinationContainer.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    private void setupNearbyLocations() {
+        // Đảm bảo predefinedLocations đã khởi tạo
+        if (predefinedLocations == null) {
+            predefinedLocations = new ArrayList<>();
+        }
+
+        // Khởi tạo adapter với callback khi chọn vị trí
+        locationAdapter = new NearbyLocationAdapter(predefinedLocations, location -> {
+            // Khi chọn địa điểm từ danh sách, di chuyển map đến vị trí đó
+            if (mMap != null && location.getLatLng() != null) {
+                // Di chuyển camera đến vị trí đã chọn
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(location.getLatLng()));
+
+                // Cập nhật thông tin vị trí hiện tại
+                updateLocationInfo(location.getLatLng());
+
+                // Thu gọn bottom sheet
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        });
+
+        rvNearbyLocations.setLayoutManager(new LinearLayoutManager(this));
+        rvNearbyLocations.setAdapter(locationAdapter);
     }
 
     private void setupClickListeners() {
@@ -99,124 +200,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
         });
 
-        btnZoomIn.setOnClickListener(v -> {
-            mMap.animateCamera(CameraUpdateFactory.zoomIn());
-        });
-
         btnChooseDestination.setOnClickListener(v -> {
             if (selectedLocation != null) {
                 // Return selected location to previous activity
-                // For now, just show a toast
                 Toast.makeText(this, "Destination selected: " + tvLocationName.getText(),
                         Toast.LENGTH_SHORT).show();
-
-                // In future: Set result and finish
-                // Intent intent = new Intent();
-                // intent.putExtra("SELECTED_LOCATION", locationName);
-                // intent.putExtra("SELECTED_ADDRESS", locationAddress);
-                // intent.putExtra("SELECTED_LAT", selectedLocation.latitude);
-                // intent.putExtra("SELECTED_LNG", selectedLocation.longitude);
-                // setResult(RESULT_OK, intent);
-                // finish();
+                finish();
             }
         });
-    }
-
-    private void setupAnimationForMarker() {
-        // Thêm animation lên xuống khi di chuyển map
-        mMap.setOnCameraMoveStartedListener(reason -> {
-            // Bắt đầu animation nảy lên xuống khi di chuyển
-            if (currentLocationMarker != null) {
-                ValueAnimator bounceAnimator = ValueAnimator.ofFloat(0, 10, 0);
-                bounceAnimator.setDuration(500);
-                bounceAnimator.setRepeatCount(ValueAnimator.INFINITE);
-                bounceAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-                bounceAnimator.addUpdateListener(animation -> {
-                    float animValue = (float) animation.getAnimatedValue();
-                    currentLocationMarker.setAnchor(0.5f, 1.0f - animValue / 100);
-                });
-                bounceAnimator.start();
-                bounceAnimator.setTag("markerAnimator");
-            }
-        });
-
-        mMap.setOnCameraIdleListener(() -> {
-            // Dừng animation và "thả" marker xuống khi dừng di chuyển
-            if (currentLocationMarker != null) {
-                ValueAnimator dropAnimator = ValueAnimator.ofFloat(10, 0);
-                dropAnimator.setDuration(300);
-                dropAnimator.setInterpolator(new BounceInterpolator());
-                dropAnimator.addUpdateListener(animation -> {
-                    float animValue = (float) animation.getAnimatedValue();
-                    currentLocationMarker.setAnchor(0.5f, 1.0f - animValue / 100);
-                });
-                dropAnimator.start();
-
-                // Lấy vị trí trung tâm của map
-                LatLng center = mMap.getCameraPosition().target;
-                selectedLocation = center;
-
-                // Cập nhật marker
-                updateMarkerPosition(center);
-
-                // Cập nhật thông tin địa điểm
-                updateLocationInfo(center);
-            }
-        });
-    }
-
-    // Thêm phương thức mới để cập nhật vị trí marker
-    private void updateMarkerPosition(LatLng position) {
-        if (currentLocationMarker != null) {
-            currentLocationMarker.remove();
-        }
-
-        // Tạo Icon từ vector drawable
-        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_location_marker);
-
-        // Nếu phương thức trên không hoạt động, bạn có thể sử dụng cách chuyển đổi Vector sang Bitmap
-        // BitmapDescriptor icon = getBitmapDescriptorFromVector(this, R.drawable.ic_location_marker);
-
-        // Tạo marker mới với icon tùy chỉnh
-        MarkerOptions markerOptions = new MarkerOptions()
-                .position(position)
-                .icon(icon);
-        currentLocationMarker = mMap.addMarker(markerOptions);
-    }
-
-    // Thêm phương thức hỗ trợ để chuyển đổi Vector Drawable sang BitmapDescriptor
-    private BitmapDescriptor getBitmapDescriptorFromVector(Context context, int vectorResId) {
-        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
-        if (vectorDrawable == null) {
-            return BitmapDescriptorFactory.defaultMarker();
-        }
-
-        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
-                vectorDrawable.getIntrinsicHeight(),
-                Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        vectorDrawable.draw(canvas);
-
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
-    }
-
-    // Thêm phương thức để cập nhật thông tin địa điểm
-    private void updateLocationInfo(LatLng position) {
-        // Ở đây bạn có thể thêm geocoding để lấy địa chỉ thực tế
-        // Nhưng trong ví dụ này, chúng ta sẽ dùng địa chỉ giả
-        tvLocationName.setText("142/43 An Binh St.");
-        tvLocationAddress.setText("An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam");
-        tvDistanceInfo.setText("0.0km");
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Set default location (Ho Chi Minh City) if location permission is not granted
+        // Set default location (Ho Chi Minh City)
         LatLng defaultLocation = new LatLng(10.7769, 106.7009);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 18f));
 
         // Check location permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -230,28 +230,218 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
-        // Listen for camera idle to get the center location
-        mMap.setOnCameraIdleListener(() -> {
-            LatLng center = mMap.getCameraPosition().target;
-            selectedLocation = center;
+        // Setup các listeners cho map
+        setupMapListeners();
 
-            // Update the marker position
-            if (currentLocationMarker != null) {
-                currentLocationMarker.remove();
-            }
+        // Khởi tạo vị trí ban đầu
+        selectedLocation = mMap.getCameraPosition().target;
+        updateLocationInfo(selectedLocation);
+    }
 
-            // Create a new marker at the center
-            MarkerOptions markerOptions = new MarkerOptions()
-                    .position(center)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-            currentLocationMarker = mMap.addMarker(markerOptions);
-
-            // Get address for the location (in a real app, use Geocoder)
-            // For simplicity, we'll use a fixed address for now
-            tvLocationName.setText("142/43 An Binh St.");
-            tvLocationAddress.setText("An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam");
-            tvDistanceInfo.setText("0.0km");
+    private void setupMapListeners() {
+        // Khi camera bắt đầu di chuyển
+        mMap.setOnCameraMoveStartedListener(reason -> {
+            isMapMoving = true;
+            startMarkerBounceAnimation();
         });
+
+        // Khi camera đang di chuyển
+        mMap.setOnCameraMoveListener(() -> {
+            // Cập nhật vị trí trung tâm mới
+            selectedLocation = mMap.getCameraPosition().target;
+        });
+
+        // Khi camera dừng lại
+        mMap.setOnCameraIdleListener(() -> {
+            isMapMoving = false;
+            stopMarkerBounceAnimation();
+            updateLocationInfo(selectedLocation);
+        });
+    }
+
+    private void startMarkerBounceAnimation() {
+        // Bắt đầu animation nảy lên xuống
+        centerMarker.animate()
+                .translationY(-20f)
+                .setDuration(300)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withEndAction(() -> {
+                    if (isMapMoving) {
+                        centerMarker.animate()
+                                .translationY(0f)
+                                .setDuration(300)
+                                .setInterpolator(new AccelerateDecelerateInterpolator())
+                                .withEndAction(() -> {
+                                    if (isMapMoving) {
+                                        startMarkerBounceAnimation();
+                                    }
+                                })
+                                .start();
+                    }
+                })
+                .start();
+    }
+
+    private void stopMarkerBounceAnimation() {
+        // Dừng animation và quay trở lại vị trí ban đầu
+        centerMarker.animate().cancel();
+        centerMarker.animate()
+                .translationY(0f)
+                .setDuration(300)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
+    }
+
+    private void updateLocationInfo(LatLng position) {
+        // Lưu vị trí được chọn
+        selectedLocation = position;
+
+        // Tạo thông tin cho vị trí hiện tại (dùng fake data vì Geocoding bị lỗi)
+        boolean locationFound = false;
+
+        // Tìm trong danh sách có vị trí nào gần với vị trí đã chọn không
+        for (NearbyLocation location : predefinedLocations) {
+            double distance = calculateDistance(position, location.getLatLng());
+
+            // Nếu khoảng cách nhỏ hơn 50m (0.05km), coi là cùng vị trí
+            if (distance < 0.05) {
+                // Cập nhật thông tin từ vị trí có sẵn
+                tvLocationName.setText(location.getName());
+                tvLocationAddress.setText(location.getAddress());
+                tvDistanceInfo.setText("0.0km");
+
+                // Lưu thông tin vào currentLocation
+                currentLocation = new NearbyLocation(
+                        location.getName(),
+                        location.getAddress(),
+                        "0.0",
+                        position);
+
+                locationFound = true;
+                break;
+            }
+        }
+
+        // Nếu không tìm thấy vị trí tương ứng, tạo thông tin mới
+        if (!locationFound) {
+            String name = "Unknown Location";
+            String address = "Hồ Chí Minh, Vietnam";
+
+            // Tạo thông tin có tọa độ tương đối
+            tvLocationName.setText(name);
+            tvLocationAddress.setText(address);
+            tvDistanceInfo.setText("0.0km");
+
+            // Lưu thông tin vào currentLocation
+            currentLocation = new NearbyLocation(name, address, "0.0", position);
+        }
+
+        // Cập nhật khoảng cách của các địa điểm gần đây so với vị trí hiện tại
+        updateDistanceToNearbyLocations(position);
+    }
+
+    private void getAddressFromLocation(LatLng latLng) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address address = addresses.get(0);
+
+                // Lấy thông tin địa chỉ
+                String addressLine = address.getMaxAddressLineIndex() > 0 ?
+                        address.getAddressLine(0) : "Unknown Location";
+
+                String city = address.getLocality();
+                String state = address.getAdminArea();
+                String country = address.getCountryName();
+                String postalCode = address.getPostalCode();
+
+                StringBuilder fullAddress = new StringBuilder();
+                if (city != null) fullAddress.append(city).append(", ");
+                if (state != null) fullAddress.append(state).append(", ");
+                if (country != null) fullAddress.append(country);
+                if (postalCode != null) fullAddress.append(", ").append(postalCode);
+
+                // Cập nhật UI
+                tvLocationName.setText(addressLine);
+                tvLocationAddress.setText(fullAddress.toString());
+                tvDistanceInfo.setText("0.0km");
+
+                // Lưu thông tin vào currentLocation
+                currentLocation = new NearbyLocation(
+                        addressLine,
+                        fullAddress.toString(),
+                        "0.0",
+                        latLng
+                );
+            } else {
+                // Fallback nếu không tìm thấy địa chỉ
+                String name = "Unknown Location";
+                tvLocationName.setText(name);
+                tvLocationAddress.setText("Hồ Chí Minh, Vietnam");
+                tvDistanceInfo.setText("0.0km");
+
+                currentLocation = new NearbyLocation(name, "Hồ Chí Minh, Vietnam", "0.0", latLng);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Xử lý lỗi
+            String name = "Unknown Location";
+            tvLocationName.setText(name);
+            tvLocationAddress.setText("Hồ Chí Minh, Vietnam");
+            tvDistanceInfo.setText("0.0km");
+
+            currentLocation = new NearbyLocation(name, "Hồ Chí Minh, Vietnam", "0.0", latLng);
+        }
+    }
+
+    private void updateDistanceToNearbyLocations(LatLng currentPosition) {
+        // Đảm bảo danh sách không null
+        if (predefinedLocations == null) {
+            predefinedLocations = new ArrayList<>();
+        }
+
+        // Cập nhật khoảng cách cho từng địa điểm
+        for (NearbyLocation location : predefinedLocations) {
+            if (location.getLatLng() != null) {
+                double distance = calculateDistance(currentPosition, location.getLatLng());
+                // Chỉ hiển thị 1 số thập phân
+                location.setDistance(String.format(Locale.getDefault(), "%.1f", distance));
+            }
+        }
+
+        // Sắp xếp danh sách theo khoảng cách
+        Collections.sort(predefinedLocations, (loc1, loc2) -> {
+            try {
+                double dist1 = Double.parseDouble(loc1.getDistance());
+                double dist2 = Double.parseDouble(loc2.getDistance());
+                return Double.compare(dist1, dist2);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        });
+
+        // Cập nhật adapter
+        locationAdapter.notifyDataSetChanged();
+    }
+
+    private double calculateDistance(LatLng point1, LatLng point2) {
+        // Tính khoảng cách giữa hai điểm
+        double lat1 = point1.latitude;
+        double lon1 = point1.longitude;
+        double lat2 = point2.latitude;
+        double lon2 = point2.longitude;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return 6371 * c; // Đơn vị km (6371 là bán kính Trái Đất)
     }
 
     private void enableMyLocation() {
@@ -292,7 +482,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        } else {
+            super.onBackPressed();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        }
     }
 }

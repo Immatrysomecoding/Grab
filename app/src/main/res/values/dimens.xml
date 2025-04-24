@@ -2,4 +2,5 @@
 
 <resources>
     <dimen name="service_item_width">150dp</dimen>
+    <dimen name="bottom_sheet_peek_height">240dp</dimen>
 </resources>

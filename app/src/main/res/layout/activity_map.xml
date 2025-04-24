@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -11,42 +10,67 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent" />
 
-    <!-- Back button with circular background -->
+    <!-- Back button -->
     <ImageButton
         android:id="@+id/btnBack"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_margin="16dp"
         android:background="@drawable/circle_white"
         android:contentDescription="Back"
-        android:elevation="4dp"
-        android:src="@drawable/ic_arrow_back"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="12dp"
+        android:src="@drawable/ic_arrow_back" />
 
-    <!-- Location information at bottom -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardLocationInfo"
+    <!-- Focus location button -->
+    <ImageButton
+        android:id="@+id/btnFocusLocation"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/circle_white"
+        android:contentDescription="Center map"
+        android:padding="12dp"
+        android:src="@drawable/ic_focus" />
+
+    <!-- Center marker - cố định ở giữa màn hình -->
+    <ImageView
+        android:id="@+id/centerMarker"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_location_marker" />
+
+    <!-- Bottom sheet for locations -->
+    <LinearLayout
+        android:id="@+id/bottomSheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="0dp"
-        app:cardElevation="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnChooseDestination"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:background="@drawable/bottom_sheet_background"
+        android:orientation="vertical"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:behavior_hideable="false"
+        app:behavior_peekHeight="200dp">
 
+        <!-- Handle bar -->
+        <View
+            android:id="@+id/handleBar"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:background="#E0E0E0" />
+
+        <!-- Current Location Section (với bg_selected_location) -->
         <LinearLayout
+            android:id="@+id/currentLocationSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/bg_selected_location"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -72,7 +96,7 @@
                         android:id="@+id/tvLocationName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="142/43 An Binh St."
+                        android:text="Unknown Location"
                         android:textColor="#000000"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -81,7 +105,7 @@
                         android:id="@+id/tvLocationAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam"
+                        android:text="Hồ Chí Minh, Vietnam"
                         android:textColor="#757575"
                         android:textSize="14sp" />
 
@@ -102,73 +126,58 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_profile" />
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:background="#E0E0E0" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_gray"
-                    android:padding="4dp"
-                    android:src="@drawable/ic_location_marker" />
-
-                <TextView
-                    android:id="@+id/tvSecondLocation"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:text="143/12 An Binh St."
-                    android:textColor="#000000"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <ImageButton
-                    android:id="@+id/btnMoreOptionsSecond"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_profile" />
-            </LinearLayout>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-    <!-- Choose destination button -->
-    <Button
-        android:id="@+id/btnChooseDestination"
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Nearby locations list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvNearbyLocations"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:clipToPadding="false"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+    <!-- Choose Destination Button với background trắng -->
+    <FrameLayout
+        android:id="@+id/chooseDestinationContainer"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:backgroundTint="#00B14F"
-        android:text="Choose This Destination"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#FFFFFF"
+        android:layout_marginBottom="24dp"
+        android:elevation="8dp">
 
-    <!-- Map controls (right side) -->
-    <ImageButton
-        android:id="@+id/btnFocusLocation"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="150dp"
-        android:background="@drawable/circle_white"
-        android:contentDescription="Center map"
-        android:elevation="4dp"
-        android:padding="12dp"
-        android:src="@drawable/ic_focus"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@android:color/white">
+
+            <Button
+                android:id="@+id/btnChooseDestination"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="#00B14F"
+                android:text="Choose This Destination"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
