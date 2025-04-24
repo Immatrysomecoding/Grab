@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,7 +53,10 @@ public class HomeActivity extends AppCompatActivity {
                 // Already on home, do nothing
                 return true;
             } else if (itemId == R.id.navigation_activity) {
-                // TODO: Navigate to Activity screen
+                // Navigate to Activity screen
+                Intent intent = new Intent(HomeActivity.this, ActivitiesActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                 return true;
             } else if (itemId == R.id.navigation_payment) {
                 // TODO: Navigate to Payment screen
@@ -67,6 +72,23 @@ public class HomeActivity extends AppCompatActivity {
         setupHotspots();
         bottomNavigation.setSelectedItemId(R.id.navigation_home);
         }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Kiểm tra xem có tab nào được chọn trong SharedPreferences không
+        SharedPreferences prefs = getSharedPreferences("nav_state", Context.MODE_PRIVATE);
+        int selectedTab = prefs.getInt("selected_tab", R.id.navigation_home);
+
+        // Đặt tab đã chọn
+        bottomNavigation.setSelectedItemId(selectedTab);
+
+        // Xóa giá trị đã lưu để lần sau không bị ảnh hưởng
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("selected_tab");
+        editor.apply();
+    }
 
     public class EqualSpacingItemDecoration extends RecyclerView.ItemDecoration {
         public static final int HORIZONTAL = 0;
