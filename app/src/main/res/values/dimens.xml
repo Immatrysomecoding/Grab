@@ -2,5 +2,6 @@
 
 <resources>
     <dimen name="service_item_width">150dp</dimen>
-    <dimen name="bottom_sheet_peek_height">240dp</dimen>
+    <dimen name="max_bottom_sheet_height">600dp</dimen>
+    <dimen name="bottom_sheet_peek_height">200dp</dimen>
 </resources>

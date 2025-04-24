@@ -129,6 +129,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         bottomSheetBehavior.setPeekHeight(getResources().getDimensionPixelSize(R.dimen.bottom_sheet_peek_height));
         bottomSheetBehavior.setHideable(false);
 
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        bottomSheetBehavior.setMaxHeight((int)(screenHeight * 0.8));
+
         bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
