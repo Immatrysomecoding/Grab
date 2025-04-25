@@ -63,11 +63,20 @@
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDGB30nV5Zt_nFflNShJPTLef6u2GtfppY" />
+            android:value="AIzaSyAM4QRcESnHhJGq7K4virXYtmzZh2rW-N0" />
 
         <activity
             android:name=".ui.home.ActivitiesActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ui.home.HistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.transport.SearchDestinationActivity"
+            android:theme="@style/Theme.MyApplication"
+            android:windowSoftInputMode="adjustResize" />
 
 
     </application>

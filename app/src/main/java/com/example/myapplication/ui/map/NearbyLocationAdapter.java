@@ -41,9 +41,16 @@ public class NearbyLocationAdapter extends RecyclerView.Adapter<NearbyLocationAd
 
     @Override
     public void onBindViewHolder(@NonNull LocationViewHolder holder, int position) {
+        android.util.Log.d("NearbyLocationAdapter", "Binding position: " + position +
+                ", Total items: " + locations.size());
+
         NearbyLocation location = locations.get(position);
 
-        // Tất cả card có background thông thường (không có card nào được highlight)
+        // Debug log cho mỗi item
+        android.util.Log.d("NearbyLocationAdapter", "Location: " + location.getName() +
+                ", Addr: " + location.getAddress() +
+                ", Dist: " + location.getDistance());
+        // Tất cả card có background thông thường
         holder.itemView.setBackgroundResource(R.drawable.bg_location_item);
 
         // Set data to views
@@ -51,16 +58,17 @@ public class NearbyLocationAdapter extends RecyclerView.Adapter<NearbyLocationAd
         holder.tvLocationAddress.setText(location.getAddress());
         holder.tvDistance.setText(location.getDistance() + "km");
 
-        // Set click listener
+        // Set click listener for the item
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
+                setSelectedPosition(position);
                 listener.onLocationSelected(location);
             }
         });
 
-        // Set click listener cho nút More Options
+        // Set click listener for the more options button
         holder.btnMoreOptions.setOnClickListener(v -> {
-            // Xử lý khi nhấn vào nút more options
+            // Handle more options button click
         });
     }
 
@@ -87,14 +95,17 @@ public class NearbyLocationAdapter extends RecyclerView.Adapter<NearbyLocationAd
 
     // Phương thức để cập nhật danh sách địa điểm
     public void updateLocations(List<NearbyLocation> newLocations) {
+        android.util.Log.d("NearbyLocationAdapter", "updateLocations called with " +
+                (newLocations != null ? newLocations.size() : 0) + " items");
+
         if (newLocations == null) {
             newLocations = new ArrayList<>();
         }
-        this.locations.clear();
-        this.locations.addAll(newLocations);
+
+        this.locations = new ArrayList<>(newLocations);
+        android.util.Log.d("NearbyLocationAdapter", "After update, adapter has " + locations.size() + " items");
         notifyDataSetChanged();
     }
-
     // Phương thức để đặt lại vị trí được chọn
     public void setSelectedPosition(int position) {
         if (position >= 0 && position < locations.size()) {

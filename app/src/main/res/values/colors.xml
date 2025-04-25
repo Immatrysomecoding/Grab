@@ -12,6 +12,10 @@
     <color name="light_green_background">#E8F5F0</color>
     <color name="light_brown_background">#F5EFEA</color>
 
+    <color name="colorBlue">#1E88E5</color>
+    <color name="colorGreen">#00B14F</color>
+    <color name="colorOrange">#FF9800</color>
+
     <!-- Custom colors -->
     <color name="colorPrimary">#00B14F</color>    <!-- Màu xanh lá của Grab -->
     <color name="colorPrimaryDark">#009933</color> <!-- Màu xanh lá đậm hơn cho status bar -->

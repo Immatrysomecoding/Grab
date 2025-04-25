@@ -132,11 +132,10 @@ public class TransportActivity extends AppCompatActivity {
         });
 
         layoutSearchBar.setOnClickListener(v -> {
-            // Will implement search destination activity later
-            // Intent intent = new Intent(TransportActivity.this, SearchDestinationActivity.class);
-            // intent.putExtra("TRANSPORT_TYPE", transportType);
-            // startActivity(intent);
+            Intent intent = new Intent(TransportActivity.this, SearchDestinationActivity.class);
+            startActivityForResult(intent, 1001); // 1001 là requestCode tùy chọn
         });
+
     }
 
     private void setupAdapters() {

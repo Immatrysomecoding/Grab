@@ -98,30 +98,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void initializePredefinedLocations() {
         predefinedLocations = new ArrayList<>();
 
-        // Thêm các địa điểm mẫu
+        // Thêm các địa điểm mẫu - hãy để tọa độ chính xác nếu bạn biết
         predefinedLocations.add(new NearbyLocation(
-                "142/43 An Binh St.",
-                "An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "Lý Tự Trọng",
+                "63 Lý Tự Trọng, Bến Nghé, Quận 1, Hồ Chí Minh, Vietnam",
                 "0.0",
-                new LatLng(10.7769, 106.7009)));
-
-        predefinedLocations.add(new NearbyLocation(
-                "143/12 An Binh St.",
-                "An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
-                "0.0",
-                new LatLng(10.7767, 106.7007)));
-
-        predefinedLocations.add(new NearbyLocation(
-                "131/10 An Binh St.",
-                "131/10 An Binh St., P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
-                "0.0",
-                new LatLng(10.7765, 106.7005)));
+                new LatLng(10.7734, 106.7030)));
 
         predefinedLocations.add(new NearbyLocation(
                 "OverArt",
                 "142 Đường An Binh, P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
                 "0.0",
-                new LatLng(10.7763, 106.7003)));
+                new LatLng(10.7563, 106.6693)));
+
+        predefinedLocations.add(new NearbyLocation(
+                "131/10 An Binh St.",
+                "131/10 An Binh St., P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7565, 106.6695)));
+
+        predefinedLocations.add(new NearbyLocation(
+                "143/12 An Binh St.",
+                "143/12 An Binh St., P.6, Q.5, Hồ Chí Minh, 70000, Vietnam",
+                "0.0",
+                new LatLng(10.7567, 106.6697)));
     }
 
     private void setupBottomSheet() {
@@ -170,11 +170,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         locationAdapter = new NearbyLocationAdapter(predefinedLocations, location -> {
             // Khi chọn địa điểm từ danh sách, di chuyển map đến vị trí đó
             if (mMap != null && location.getLatLng() != null) {
-                // Di chuyển camera đến vị trí đã chọn
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(location.getLatLng()));
+                // Di chuyển camera đến vị trí đã chọn - dùng animateCamera để có hiệu ứng mượt mà
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getLatLng(), 18f));
 
-                // Cập nhật thông tin vị trí hiện tại
-                updateLocationInfo(location.getLatLng());
+                // QUAN TRỌNG: Cập nhật thông tin khi click vào card
+                selectedLocation = location.getLatLng();
 
                 // Thu gọn bottom sheet
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -199,6 +199,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (location != null) {
                     LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18f));
+
+                    // Cập nhật selectedLocation và thông tin vị trí
+                    selectedLocation = currentLocation;
+                    updateLocationInfo(selectedLocation);
                 }
             });
         });
@@ -217,8 +221,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Set default location (Ho Chi Minh City)
-        LatLng defaultLocation = new LatLng(10.7769, 106.7009);
+        // Set default location (An Binh, District 5)
+        LatLng defaultLocation = new LatLng(10.7568, 106.6691);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 18f));
 
         // Check location permission
@@ -258,6 +262,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.setOnCameraIdleListener(() -> {
             isMapMoving = false;
             stopMarkerBounceAnimation();
+            selectedLocation = mMap.getCameraPosition().target;
             updateLocationInfo(selectedLocation);
         });
     }
@@ -299,123 +304,120 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Lưu vị trí được chọn
         selectedLocation = position;
 
-        // Tạo thông tin cho vị trí hiện tại (dùng fake data vì Geocoding bị lỗi)
-        boolean locationFound = false;
+        // Sử dụng Geocoder để lấy thông tin địa chỉ
+        try {
+            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(position.latitude, position.longitude, 1);
 
-        // Tìm trong danh sách có vị trí nào gần với vị trí đã chọn không
-        for (NearbyLocation location : predefinedLocations) {
-            double distance = calculateDistance(position, location.getLatLng());
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
 
-            // Nếu khoảng cách nhỏ hơn 50m (0.05km), coi là cùng vị trí
-            if (distance < 0.05) {
-                // Cập nhật thông tin từ vị trí có sẵn
-                tvLocationName.setText(location.getName());
-                tvLocationAddress.setText(location.getAddress());
+                // Lấy tên địa điểm
+                String name = address.getFeatureName();
+                if (name == null || name.isEmpty() || name.matches("\\d+")) {
+                    // Nếu tên chỉ là số, thử dùng thoroughfare (tên đường)
+                    name = address.getThoroughfare();
+                    if (name == null || name.isEmpty()) {
+                        name = address.getSubAdminArea();
+                        if (name == null || name.isEmpty()) {
+                            name = "Vị trí đã chọn";
+                        }
+                    }
+                }
+
+                // Tạo địa chỉ đầy đủ
+                StringBuilder fullAddress = new StringBuilder();
+                // Thêm số nhà và tên đường
+                String addressLine = address.getAddressLine(0);
+                if (addressLine != null && !addressLine.isEmpty()) {
+                    fullAddress.append(addressLine);
+                } else {
+                    // Tự tạo địa chỉ từ các thành phần
+                    String street = address.getThoroughfare();
+                    String subArea = address.getSubLocality();
+                    String city = address.getLocality();
+                    String state = address.getAdminArea();
+                    String postalCode = address.getPostalCode();
+                    String country = address.getCountryName();
+
+                    if (street != null) fullAddress.append(street).append(", ");
+                    if (subArea != null) fullAddress.append(subArea).append(", ");
+                    if (city != null) fullAddress.append(city).append(", ");
+                    if (state != null) fullAddress.append(state).append(", ");
+                    if (country != null) fullAddress.append(country);
+                    if (postalCode != null) fullAddress.append(" ").append(postalCode);
+                }
+
+                // Cập nhật UI
+                tvLocationName.setText(name);
+                tvLocationAddress.setText(fullAddress.toString());
                 tvDistanceInfo.setText("0.0km");
 
                 // Lưu thông tin vào currentLocation
                 currentLocation = new NearbyLocation(
-                        location.getName(),
-                        location.getAddress(),
+                        name,
+                        fullAddress.toString(),
                         "0.0",
-                        position);
-
-                locationFound = true;
-                break;
+                        position
+                );
+            } else {
+                // Fallback khi không có kết quả
+                setDefaultLocationInfo(position);
             }
-        }
-
-        // Nếu không tìm thấy vị trí tương ứng, tạo thông tin mới
-        if (!locationFound) {
-            String name = "Unknown Location";
-            String address = "Hồ Chí Minh, Vietnam";
-
-            // Tạo thông tin có tọa độ tương đối
-            tvLocationName.setText(name);
-            tvLocationAddress.setText(address);
-            tvDistanceInfo.setText("0.0km");
-
-            // Lưu thông tin vào currentLocation
-            currentLocation = new NearbyLocation(name, address, "0.0", position);
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Xử lý lỗi
+            setDefaultLocationInfo(position);
         }
 
         // Cập nhật khoảng cách của các địa điểm gần đây so với vị trí hiện tại
         updateDistanceToNearbyLocations(position);
     }
 
-    private void getAddressFromLocation(LatLng latLng) {
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+    // Helper method khi geocoding thất bại
+    private void setDefaultLocationInfo(LatLng position) {
+        String name = "Vị trí đã chọn";
+        String address = String.format(Locale.getDefault(),
+                "%.6f, %.6f", position.latitude, position.longitude);
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            if (addresses != null && addresses.size() > 0) {
-                Address address = addresses.get(0);
+        tvLocationName.setText(name);
+        tvLocationAddress.setText(address);
+        tvDistanceInfo.setText("0.0km");
 
-                // Lấy thông tin địa chỉ
-                String addressLine = address.getMaxAddressLineIndex() > 0 ?
-                        address.getAddressLine(0) : "Unknown Location";
-
-                String city = address.getLocality();
-                String state = address.getAdminArea();
-                String country = address.getCountryName();
-                String postalCode = address.getPostalCode();
-
-                StringBuilder fullAddress = new StringBuilder();
-                if (city != null) fullAddress.append(city).append(", ");
-                if (state != null) fullAddress.append(state).append(", ");
-                if (country != null) fullAddress.append(country);
-                if (postalCode != null) fullAddress.append(", ").append(postalCode);
-
-                // Cập nhật UI
-                tvLocationName.setText(addressLine);
-                tvLocationAddress.setText(fullAddress.toString());
-                tvDistanceInfo.setText("0.0km");
-
-                // Lưu thông tin vào currentLocation
-                currentLocation = new NearbyLocation(
-                        addressLine,
-                        fullAddress.toString(),
-                        "0.0",
-                        latLng
-                );
-            } else {
-                // Fallback nếu không tìm thấy địa chỉ
-                String name = "Unknown Location";
-                tvLocationName.setText(name);
-                tvLocationAddress.setText("Hồ Chí Minh, Vietnam");
-                tvDistanceInfo.setText("0.0km");
-
-                currentLocation = new NearbyLocation(name, "Hồ Chí Minh, Vietnam", "0.0", latLng);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Xử lý lỗi
-            String name = "Unknown Location";
-            tvLocationName.setText(name);
-            tvLocationAddress.setText("Hồ Chí Minh, Vietnam");
-            tvDistanceInfo.setText("0.0km");
-
-            currentLocation = new NearbyLocation(name, "Hồ Chí Minh, Vietnam", "0.0", latLng);
-        }
+        currentLocation = new NearbyLocation(name, address, "0.0", position);
     }
 
     private void updateDistanceToNearbyLocations(LatLng currentPosition) {
         // Đảm bảo danh sách không null
         if (predefinedLocations == null) {
-            predefinedLocations = new ArrayList<>();
+            initializePredefinedLocations(); // Đảm bảo rằng predefinedLocations đã được khởi tạo
         }
+
+        // Tạo bản sao của danh sách để không ảnh hưởng đến danh sách gốc
+        List<NearbyLocation> updatedLocations = new ArrayList<>();
 
         // Cập nhật khoảng cách cho từng địa điểm
         for (NearbyLocation location : predefinedLocations) {
             if (location.getLatLng() != null) {
-                double distance = calculateDistance(currentPosition, location.getLatLng());
-                // Chỉ hiển thị 1 số thập phân
-                location.setDistance(String.format(Locale.getDefault(), "%.1f", distance));
+                // Tạo bản sao mới của location để tránh thay đổi đối tượng gốc
+                NearbyLocation updatedLocation = new NearbyLocation(
+                        location.getName(),
+                        location.getAddress(),
+                        "0.0", // Sẽ cập nhật khoảng cách ở dưới
+                        location.getLatLng()
+                );
+
+                // Tính và cập nhật khoảng cách
+                double distance = calculateDistance(currentPosition, updatedLocation.getLatLng());
+                updatedLocation.setDistance(String.format(Locale.getDefault(), "%.1f", distance));
+
+                // Thêm vào danh sách mới
+                updatedLocations.add(updatedLocation);
             }
         }
 
         // Sắp xếp danh sách theo khoảng cách
-        Collections.sort(predefinedLocations, (loc1, loc2) -> {
+        Collections.sort(updatedLocations, (loc1, loc2) -> {
             try {
                 double dist1 = Double.parseDouble(loc1.getDistance());
                 double dist2 = Double.parseDouble(loc2.getDistance());
@@ -425,12 +427,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-        // Cập nhật adapter
-        locationAdapter.notifyDataSetChanged();
+        // Debug log - kiểm tra xem danh sách có dữ liệu không
+        android.util.Log.d("MapActivity", "Updated locations count: " + updatedLocations.size());
+        for (NearbyLocation loc : updatedLocations) {
+            android.util.Log.d("MapActivity", "Location: " + loc.getName() + ", Distance: " + loc.getDistance());
+        }
+
+        // Cập nhật adapter với danh sách mới
+        if (locationAdapter != null) {
+            locationAdapter.updateLocations(updatedLocations);
+        }
     }
 
     private double calculateDistance(LatLng point1, LatLng point2) {
-        // Tính khoảng cách giữa hai điểm
+        // Tính khoảng cách giữa hai điểm sử dụng công thức Haversine
         double lat1 = point1.latitude;
         double lon1 = point1.longitude;
         double lat2 = point2.latitude;
@@ -454,14 +464,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         mMap.setMyLocationEnabled(true);
-
-        // Get the last known location and move the camera
-        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (location != null) {
-                LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18f));
-            }
-        });
     }
 
     private void requestLocationPermission() {

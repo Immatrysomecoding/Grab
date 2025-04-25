@@ -84,7 +84,9 @@ public class ActivitiesActivity extends AppCompatActivity {
 
         CardView btnHistory = findViewById(R.id.btnHistory);
         btnHistory.setOnClickListener(v -> {
-            // TODO: Navigate to History screen
+            Intent intent = new Intent(ActivitiesActivity.this, HistoryActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         ImageView btnCloseInsights = findViewById(R.id.btnCloseInsights);
